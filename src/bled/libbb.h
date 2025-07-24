@@ -90,8 +90,14 @@ typedef unsigned short mode_t;
 /* Non-Windows platforms have mode_t defined in sys/types.h */
 #endif
 
-/* Define smallint for all platforms */
-typedef unsigned char smallint;
+/* Define smallint for all platforms - match bled/platform.h definition */
+#ifndef smallint
+#if defined(__386__) || defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64) || defined(__mips__) || defined(__cris__)
+typedef signed char smallint;
+#else
+typedef int smallint;
+#endif
+#endif
 
 /* Define FAST_FUNC for all platforms */
 #ifndef FAST_FUNC
@@ -134,11 +140,15 @@ typedef unsigned char smallint;
 /* Byte swap functions */
 #ifndef SWAP_LE32
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define SWAP_LE16(val) (val)
 #define SWAP_LE32(val) (val)
 #define SWAP_LE64(val) (val)
+#define BB_BIG_ENDIAN 0
 #else
+#define SWAP_LE16(val) __builtin_bswap16(val)
 #define SWAP_LE32(val) __builtin_bswap32(val)  
 #define SWAP_LE64(val) __builtin_bswap64(val)
+#define BB_BIG_ENDIAN 1
 #endif
 #endif
 

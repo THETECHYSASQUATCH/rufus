@@ -292,12 +292,20 @@ typedef uint64_t bb__aliased_uint64_t FIX_ALIASING;
 
 #if defined(__386__) || defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64) || defined(__mips__) || defined(__cris__)
 /* add other arches which benefit from this... */
+#ifndef smallint
 typedef signed char smallint;
+#endif
+#ifndef smalluint
 typedef unsigned char smalluint;
+#endif
 #else
 /* for arches where byte accesses generate larger code: */
+#ifndef smallint
 typedef int smallint;
+#endif
+#ifndef smalluint
 typedef unsigned smalluint;
+#endif
 #endif
 
 /* ISO C Standard:  7.16  Boolean type and values  <stdbool.h> */
