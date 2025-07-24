@@ -18,10 +18,29 @@ AC_CHECK_TOOL(WINDRES, windres, :)
 AC_C_INLINE
 AC_DEFINE([_GNU_SOURCE], [], [Use GNU extensions])
 
-AM_CFLAGS="${AM_CFLAGS} -DWINVER=0x0A00 -D_WIN32_WINNT=0x0A00 -D_WIN32_IE=0x0A00"
-# "-Wl,--nxcompat" to enable DEP (Data Execution Prevention)
-# "-Wl,--dynamicbase" to enable ASLR (Address Space Layout Randomization)
-AM_LDFLAGS="${AM_LDFLAGS} -Wl,-no-undefined -Wl,--nxcompat -Wl,--no-insert-timestamp -Wl,--dynamicbase"
+# Platform detection
+case "${host_os}" in
+    *mingw*|*cygwin*|*msys*)
+        platform_windows=yes
+        AM_CFLAGS="${AM_CFLAGS} -DWINVER=0x0A00 -D_WIN32_WINNT=0x0A00 -D_WIN32_IE=0x0A00"
+        # "-Wl,--nxcompat" to enable DEP (Data Execution Prevention)
+        # "-Wl,--dynamicbase" to enable ASLR (Address Space Layout Randomization)
+        AM_LDFLAGS="${AM_LDFLAGS} -Wl,-no-undefined -Wl,--nxcompat -Wl,--no-insert-timestamp -Wl,--dynamicbase"
+        ;;
+    *darwin*)
+        platform_macos=yes
+        ;;
+    *linux*)
+        platform_linux=yes
+        ;;
+    *)
+        platform_other=yes
+        ;;
+esac
+
+AM_CONDITIONAL([PLATFORM_WINDOWS], [test "x$platform_windows" = "xyes"])
+AM_CONDITIONAL([PLATFORM_MACOS], [test "x$platform_macos" = "xyes"])
+AM_CONDITIONAL([PLATFORM_LINUX], [test "x$platform_linux" = "xyes"])
 
 # Debug symbols
 AC_ARG_ENABLE([debug],

@@ -2,7 +2,18 @@
 #ifndef UNARCHIVE_H
 #define UNARCHIVE_H 1
 
-PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
+/* Define busybox macros for cross-platform compatibility */
+#ifndef PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
+#define PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
+#endif
+
+#ifndef USE_FOR_NOMMU
+#define USE_FOR_NOMMU(x)
+#endif
+
+#ifndef POP_SAVED_FUNCTION_VISIBILITY
+#define POP_SAVED_FUNCTION_VISIBILITY
+#endif
 
 enum {
 #if BB_BIG_ENDIAN
@@ -263,24 +274,41 @@ static inline int transformer_switch_file(transformer_state_t* xstate)
 	size_t i, last_slash = 0;
 
 	if (xstate->dst_fd > 0) {
+#ifdef PLATFORM_WINDOWS
 		_close(xstate->dst_fd);
+#else
+		close(xstate->dst_fd);
+#endif
 		xstate->dst_fd = -1;
 	}
+#ifdef PLATFORM_WINDOWS
 	_snprintf_s(dst, sizeof(dst), _TRUNCATE, "%s/%s", xstate->dst_dir, xstate->dst_name);
+#else
+	snprintf(dst, sizeof(dst), "%s/%s", xstate->dst_dir, xstate->dst_name);
+#endif
 	free(xstate->dst_name);
 	xstate->dst_name = NULL;
 	for (i = 0; i < strlen(dst); i++) {
 		if (dst[i] == '/')
+#ifdef PLATFORM_WINDOWS
 			dst[i] = '\\';
 		if (dst[i] == '\\')
+#endif
 			last_slash = i;
 	}
 	if (bled_switch != NULL)
 		bled_switch(dst, xstate->dst_size);
 	dst[last_slash] = 0;
+#ifdef PLATFORM_WINDOWS
 	bb_make_directory(dst, 0, 0);
 	dst[last_slash] = '/';
 	xstate->dst_fd = _openU(dst, _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY, _S_IREAD | _S_IWRITE);
+#else
+	/* Create directory using mkdir on non-Windows platforms */
+	mkdir(dst, 0755);
+	dst[last_slash] = '/';
+	xstate->dst_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+#endif
 	if (xstate->dst_fd < 0) {
 		bb_error_msg("Could not create '%s' (errno: %d)", dst, errno);
 		return -errno;

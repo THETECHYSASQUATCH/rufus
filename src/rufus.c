@@ -22,22 +22,17 @@
 #include <crtdbg.h>
 #endif
 
-#include <windows.h>
-#include <windowsx.h>
+#include "platform.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <winioctl.h>
-#include <shlobj.h>
-#include <process.h>
-#include <dwmapi.h>
-#include <dbt.h>
-#include <io.h>
-#include <getopt.h>
-#include <assert.h>
+#ifdef PLATFORM_WINDOWS
 #include <delayimp.h>
+#endif
+#include <assert.h>
+#include <getopt.h>
 
 #include "rufus.h"
 #include "format.h"

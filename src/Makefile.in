@@ -111,15 +111,28 @@ am_rufus_OBJECTS = rufus-badblocks.$(OBJEXT) rufus-darkmode.$(OBJEXT) \
 	rufus-stdfn.$(OBJEXT) rufus-stdio.$(OBJEXT) \
 	rufus-stdlg.$(OBJEXT) rufus-syslinux.$(OBJEXT) \
 	rufus-ui.$(OBJEXT) rufus-vhd.$(OBJEXT) rufus-wue.$(OBJEXT) \
-	rufus-xml.$(OBJEXT)
+	rufus-xml.$(OBJEXT) rufus-platform.$(OBJEXT)
 rufus_OBJECTS = $(am_rufus_OBJECTS)
 am__DEPENDENCIES_1 =
-rufus_DEPENDENCIES = rufus_rc.o bled/libbled.a ext2fs/libext2fs.a \
-	ms-sys/libmssys.a syslinux/libfat/libfat.a \
-	syslinux/libinstaller/libinstaller.a syslinux/win/libwin.a \
-	libcdio/iso9660/libiso9660.a libcdio/udf/libudf.a \
-	libcdio/driver/libdriver.a wimlib/libwim.a \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+@PLATFORM_WINDOWS_FALSE@rufus_DEPENDENCIES = bled/libbled.a \
+@PLATFORM_WINDOWS_FALSE@	ext2fs/libext2fs.a ms-sys/libmssys.a \
+@PLATFORM_WINDOWS_FALSE@	syslinux/libfat/libfat.a \
+@PLATFORM_WINDOWS_FALSE@	syslinux/libinstaller/libinstaller.a \
+@PLATFORM_WINDOWS_FALSE@	syslinux/win/libwin.a \
+@PLATFORM_WINDOWS_FALSE@	libcdio/iso9660/libiso9660.a \
+@PLATFORM_WINDOWS_FALSE@	libcdio/udf/libudf.a \
+@PLATFORM_WINDOWS_FALSE@	libcdio/driver/libdriver.a \
+@PLATFORM_WINDOWS_FALSE@	wimlib/libwim.a
+@PLATFORM_WINDOWS_TRUE@rufus_DEPENDENCIES = rufus_rc.o bled/libbled.a \
+@PLATFORM_WINDOWS_TRUE@	ext2fs/libext2fs.a ms-sys/libmssys.a \
+@PLATFORM_WINDOWS_TRUE@	syslinux/libfat/libfat.a \
+@PLATFORM_WINDOWS_TRUE@	syslinux/libinstaller/libinstaller.a \
+@PLATFORM_WINDOWS_TRUE@	syslinux/win/libwin.a \
+@PLATFORM_WINDOWS_TRUE@	libcdio/iso9660/libiso9660.a \
+@PLATFORM_WINDOWS_TRUE@	libcdio/udf/libudf.a \
+@PLATFORM_WINDOWS_TRUE@	libcdio/driver/libdriver.a \
+@PLATFORM_WINDOWS_TRUE@	wimlib/libwim.a $(am__DEPENDENCIES_1) \
+@PLATFORM_WINDOWS_TRUE@	$(am__DEPENDENCIES_1)
 rufus_LINK = $(CCLD) $(rufus_CFLAGS) $(CFLAGS) $(rufus_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -297,14 +310,18 @@ AM_V_WINDRES_1 = $(WINDRES)
 AM_V_WINDRES_ = $(AM_V_WINDRES_$(AM_DEFAULT_VERBOSITY))
 AM_V_WINDRES = $(AM_V_WINDRES_$(V))
 rufus_SOURCES = badblocks.c darkmode.c dev.c dos.c dos_locale.c drive.c format.c format_ext.c format_fat32.c hash.c icon.c iso.c localization.c \
-	 net.c parser.c pki.c process.c cregex_compile.c cregex_parse.c cregex_vm.c rufus.c smart.c stdfn.c stdio.c stdlg.c syslinux.c ui.c vhd.c wue.c xml.c
+	 net.c parser.c pki.c process.c cregex_compile.c cregex_parse.c cregex_vm.c rufus.c smart.c stdfn.c stdio.c stdlg.c syslinux.c ui.c vhd.c wue.c xml.c platform.c
 
 rufus_CFLAGS = -I$(srcdir)/ms-sys/inc -I$(srcdir)/syslinux/libfat -I$(srcdir)/syslinux/libinstaller -I$(srcdir)/syslinux/win -I$(srcdir)/libcdio -I$(srcdir)/wimlib -I$(srcdir)/../res $(AM_CFLAGS) \
 	-DEXT2_FLAT_INCLUDES=0 -D_RUFUS -DSOLUTION=rufus
 
-rufus_LDFLAGS = $(AM_LDFLAGS) -mwindows -L../.mingw
-rufus_LDADD = rufus_rc.o bled/libbled.a ext2fs/libext2fs.a ms-sys/libmssys.a syslinux/libfat/libfat.a syslinux/libinstaller/libinstaller.a syslinux/win/libwin.a \
-	libcdio/iso9660/libiso9660.a libcdio/udf/libudf.a libcdio/driver/libdriver.a wimlib/libwim.a $(NONVULNERABLE_LIBS) $(VULNERABLE_LIBS)
+@PLATFORM_WINDOWS_FALSE@rufus_LDFLAGS = $(AM_LDFLAGS)
+@PLATFORM_WINDOWS_TRUE@rufus_LDFLAGS = $(AM_LDFLAGS) -mwindows -L../.mingw
+@PLATFORM_WINDOWS_FALSE@rufus_LDADD = bled/libbled.a ext2fs/libext2fs.a ms-sys/libmssys.a syslinux/libfat/libfat.a syslinux/libinstaller/libinstaller.a syslinux/win/libwin.a \
+@PLATFORM_WINDOWS_FALSE@	libcdio/iso9660/libiso9660.a libcdio/udf/libudf.a libcdio/driver/libdriver.a wimlib/libwim.a
+
+@PLATFORM_WINDOWS_TRUE@rufus_LDADD = rufus_rc.o bled/libbled.a ext2fs/libext2fs.a ms-sys/libmssys.a syslinux/libfat/libfat.a syslinux/libinstaller/libinstaller.a syslinux/win/libwin.a \
+@PLATFORM_WINDOWS_TRUE@	libcdio/iso9660/libiso9660.a libcdio/udf/libudf.a libcdio/driver/libdriver.a wimlib/libwim.a $(NONVULNERABLE_LIBS) $(VULNERABLE_LIBS)
 
 all: all-recursive
 
@@ -538,6 +555,12 @@ rufus-xml.o: xml.c
 
 rufus-xml.obj: xml.c
 	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rufus_CFLAGS) $(CFLAGS) -c -o rufus-xml.obj `if test -f 'xml.c'; then $(CYGPATH_W) 'xml.c'; else $(CYGPATH_W) '$(srcdir)/xml.c'; fi`
+
+rufus-platform.o: platform.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rufus_CFLAGS) $(CFLAGS) -c -o rufus-platform.o `test -f 'platform.c' || echo '$(srcdir)/'`platform.c
+
+rufus-platform.obj: platform.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rufus_CFLAGS) $(CFLAGS) -c -o rufus-platform.obj `if test -f 'platform.c'; then $(CYGPATH_W) 'platform.c'; else $(CYGPATH_W) '$(srcdir)/platform.c'; fi`
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.

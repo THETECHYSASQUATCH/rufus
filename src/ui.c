@@ -23,13 +23,15 @@
 #include <crtdbg.h>
 #endif
 
-#include <windows.h>
+#include "platform.h"
+#ifdef PLATFORM_WINDOWS
 #include <windowsx.h>
+#include <oleacc.h>
+#include <winioctl.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <oleacc.h>
-#include <winioctl.h>
 #include <assert.h>
 
 #include "rufus.h"
