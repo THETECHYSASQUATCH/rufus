@@ -6,7 +6,7 @@
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
-#include <windows.h>
+#include "../platform.h"
 #include <stdint.h>
 
 #pragma once

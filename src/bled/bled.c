@@ -11,6 +11,7 @@
 #include <crtdbg.h>
 #endif
 
+#include <stdbool.h>
 #include "libbb.h"
 #include "bb_archive.h"
 #include "bled.h"
@@ -70,13 +71,21 @@ int64_t bled_uncompress(const char* src, const char* dst, int type)
 	xstate.src_fd = -1;
 	xstate.dst_fd = -1;
 
+#ifdef PLATFORM_WINDOWS
 	xstate.src_fd = _openU(src, _O_RDONLY | _O_BINARY, 0);
+#else
+	xstate.src_fd = open(src, O_RDONLY, 0);
+#endif
 	if (xstate.src_fd < 0) {
 		bb_error_msg("Could not open '%s' (errno: %d)", src, errno);
 		goto err;
 	}
 
+#ifdef PLATFORM_WINDOWS
 	xstate.dst_fd = _openU(dst, _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY, _S_IREAD | _S_IWRITE);
+#else
+	xstate.dst_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+#endif
 	if (xstate.dst_fd < 0) {
 		bb_error_msg("Could not open '%s' (errno: %d)", dst, errno);
 		goto err;
@@ -95,9 +104,17 @@ int64_t bled_uncompress(const char* src, const char* dst, int type)
 err:
 	free(xstate.dst_name);
 	if (xstate.src_fd > 0)
+		#ifdef PLATFORM_WINDOWS
 		_close(xstate.src_fd);
+#else
+		close(xstate.src_fd);
+#endif
 	if (xstate.dst_fd > 0)
+		#ifdef PLATFORM_WINDOWS
 		_close(xstate.dst_fd);
+#else
+		close(xstate.dst_fd);
+#endif
 	return ret;
 }
 
@@ -116,13 +133,23 @@ int64_t bled_uncompress_with_handles(HANDLE hSrc, HANDLE hDst, int type)
 	xstate.src_fd = -1;
 	xstate.dst_fd = -1;
 
+#ifdef PLATFORM_WINDOWS
 	xstate.src_fd = _open_osfhandle((intptr_t)hSrc, _O_RDONLY);
+#else
+	/* On non-Windows platforms, assume the handle is a file descriptor */
+	xstate.src_fd = (int)(intptr_t)hSrc;
+#endif
 	if (xstate.src_fd < 0) {
 		bb_error_msg("Could not get source descriptor (errno: %d)", errno);
 		return -1;
 	}
 
+#ifdef PLATFORM_WINDOWS
 	xstate.dst_fd = _open_osfhandle((intptr_t)hDst, 0);
+#else
+	/* On non-Windows platforms, assume the handle is a file descriptor */
+	xstate.dst_fd = (int)(intptr_t)hDst;
+#endif
 	if (xstate.dst_fd < 0) {
 		bb_error_msg("Could not get target descriptor (errno: %d)", errno);
 		return -1;
@@ -163,7 +190,11 @@ int64_t bled_uncompress_to_buffer(const char* src, char* buf, size_t size, int t
 	if (src[0] == 0) {
 		xstate.src_fd = bb_virtual_fd;
 	} else {
+#ifdef PLATFORM_WINDOWS
 		xstate.src_fd = _openU(src, _O_RDONLY | _O_BINARY, 0);
+#else
+		xstate.src_fd = open(src, O_RDONLY, 0);
+#endif
 	}
 	if (xstate.src_fd < 0) {
 		bb_error_msg("Could not open '%s' (errno: %d)", src, errno);
@@ -187,7 +218,11 @@ int64_t bled_uncompress_to_buffer(const char* src, char* buf, size_t size, int t
 err:
 	free(xstate.dst_name);
 	if ((src[0] != 0) && (xstate.src_fd > 0))
+		#ifdef PLATFORM_WINDOWS
 		_close(xstate.src_fd);
+#else
+		close(xstate.src_fd);
+#endif
 	return ret;
 }
 
@@ -207,7 +242,11 @@ int64_t bled_uncompress_to_dir(const char* src, const char* dir, int type)
 	xstate.src_fd = -1;
 	xstate.dst_fd = -1;
 
+#ifdef PLATFORM_WINDOWS
 	xstate.src_fd = _openU(src, _O_RDONLY | _O_BINARY, 0);
+#else
+	xstate.src_fd = open(src, O_RDONLY, 0);
+#endif
 	if (xstate.src_fd < 0) {
 		bb_error_msg("Could not open '%s' (errno: %d)", src, errno);
 		goto err;
@@ -229,9 +268,17 @@ int64_t bled_uncompress_to_dir(const char* src, const char* dir, int type)
 err:
 	free(xstate.dst_name);
 	if (xstate.src_fd > 0)
+		#ifdef PLATFORM_WINDOWS
 		_close(xstate.src_fd);
+#else
+		close(xstate.src_fd);
+#endif
 	if (xstate.dst_fd > 0)
+		#ifdef PLATFORM_WINDOWS
 		_close(xstate.dst_fd);
+#else
+		close(xstate.dst_fd);
+#endif
 	return ret;
 }
 

@@ -98,6 +98,50 @@ typedef unsigned char smallint;
 #define FAST_FUNC
 #endif
 
+/* Define busybox alignment and attribute macros */
+#ifndef ALIGN2  
+#define ALIGN2 __attribute__((aligned(2)))
+#endif
+
+#ifndef ALIGN1
+#define ALIGN1 __attribute__((aligned(1)))
+#endif
+
+#ifndef NORETURN
+#define NORETURN __attribute__((noreturn))
+#endif
+
+#ifndef NOINLINE
+#define NOINLINE __attribute__((noinline))
+#endif
+
+#ifndef ALWAYS_INLINE
+#define ALWAYS_INLINE __attribute__((always_inline)) inline
+#endif
+
+#ifndef PRAGMA_BEGIN_PACKED
+#define PRAGMA_BEGIN_PACKED _Pragma("pack(1)")
+#endif
+
+#ifndef PRAGMA_END_PACKED 
+#define PRAGMA_END_PACKED _Pragma("pack()")
+#endif
+
+#ifndef PACKED
+#define PACKED __attribute__((packed))
+#endif
+
+/* Byte swap functions */
+#ifndef SWAP_LE32
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define SWAP_LE32(val) (val)
+#define SWAP_LE64(val) (val)
+#else
+#define SWAP_LE32(val) __builtin_bswap32(val)  
+#define SWAP_LE64(val) __builtin_bswap64(val)
+#endif
+#endif
+
 #ifndef _PID_T_
 #define _PID_T_
 typedef int pid_t;
@@ -202,7 +246,11 @@ static inline void *xrealloc(void *ptr, size_t size) {
 
 #define bb_msg_read_error "read error"
 #define bb_msg_write_error "write error"
+#ifdef PLATFORM_WINDOWS
 #define bb_make_directory(path, mode, flags) SHCreateDirectoryExU(NULL, path, NULL)
+#else
+#define bb_make_directory(path, mode, flags) mkdir(path, 0755)
+#endif
 
 #ifdef PLATFORM_WINDOWS
 static inline int link(const char *oldpath, const char *newpath) { errno = ENOSYS; return -1; }

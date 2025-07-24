@@ -77,6 +77,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -86,6 +87,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -135,6 +137,17 @@ HANDLE CreateFileA(const char* lpFileName, DWORD dwDesiredAccess, DWORD dwShareM
                    void* lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 BOOL CloseHandle(HANDLE hObject);
+
+/* File and directory operation stubs */
+#define SHCreateDirectoryExU(pFrom, pTo, pSecAttr) mkdir(pTo, 0755)
+#define _unlink(file) unlink(file)
+#define _close(fd) close(fd)
+#define _chmod(file, mode) chmod(file, mode)
+#define _sopen_s(pfd, file, oflag, shflag, pmode) (*(pfd) = open(file, oflag, pmode), (*(pfd) >= 0 ? 0 : errno))
+#define _SH_DENYNO 0
+
+/* Time-related functions */
+#define utimes64(file, times) utimes(file, (const struct timeval *)times)
 
 /* Stub implementations for now - to be replaced with actual platform code */
 #define RegOpenKeyExA(...)     FALSE
