@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <assert.h>
-#include <windows.h>
+#include "platform.h"
 #include <malloc.h>
 #include <inttypes.h>
 
@@ -45,6 +45,7 @@
 //#define RUFUS_TEST
 
 #define APPLICATION_NAME            "Rufus"
+#ifdef PLATFORM_WINDOWS
 #if defined(_M_AMD64)
 #define APPLICATION_ARCH            "x64"
 #elif defined(_M_IX86)
@@ -56,6 +57,8 @@
 #else
 #define APPLICATION_ARCH            "(Unknown Arch)"
 #endif
+#endif
+/* APPLICATION_ARCH for non-Windows platforms defined in platform.h */
 #define COMPANY_NAME                "Akeo Consulting"
 #define STR_NO_LABEL                "NO_LABEL"
 #define LEFT_TO_RIGHT_MARK          "\u200e"

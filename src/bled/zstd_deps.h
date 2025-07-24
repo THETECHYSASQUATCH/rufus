@@ -39,7 +39,9 @@
 #include <limits.h>
 #include <stddef.h>
 #include <string.h>
+#ifdef PLATFORM_WINDOWS
 #include <crtdefs.h>
+#endif
 #include "zstd_config.h"
 
 #if defined(__GNUC__) && __GNUC__ >= 4

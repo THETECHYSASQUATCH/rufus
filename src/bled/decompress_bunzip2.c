@@ -40,6 +40,7 @@
  */
 #include "libbb.h"
 #include "bb_archive.h"
+#include <limits.h>
 
 #if 0
 # define dbg(...) bb_printf(__VA_ARGS__)

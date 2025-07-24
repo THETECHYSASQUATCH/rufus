@@ -625,12 +625,6 @@ SUFFIX
 AM_LDFLAGS
 AM_CFLAGS
 VISIBILITY_CFLAGS
-PLATFORM_LINUX_FALSE
-PLATFORM_LINUX_TRUE
-PLATFORM_MACOS_FALSE
-PLATFORM_MACOS_TRUE
-PLATFORM_WINDOWS_FALSE
-PLATFORM_WINDOWS_TRUE
 WINDRES
 DLLTOOL
 RM
@@ -4659,50 +4653,10 @@ esac
 printf "%s\n" "#define _GNU_SOURCE /**/" >>confdefs.h
 
 
-# Platform detection
-case "${host_os}" in
-    *mingw*|*cygwin*|*msys*)
-        platform_windows=yes
-        AM_CFLAGS="${AM_CFLAGS} -DWINVER=0x0A00 -D_WIN32_WINNT=0x0A00 -D_WIN32_IE=0x0A00"
-        # "-Wl,--nxcompat" to enable DEP (Data Execution Prevention)
-        # "-Wl,--dynamicbase" to enable ASLR (Address Space Layout Randomization)
-        AM_LDFLAGS="${AM_LDFLAGS} -Wl,-no-undefined -Wl,--nxcompat -Wl,--no-insert-timestamp -Wl,--dynamicbase"
-        ;;
-    *darwin*)
-        platform_macos=yes
-        ;;
-    *linux*)
-        platform_linux=yes
-        ;;
-    *)
-        platform_other=yes
-        ;;
-esac
-
- if test "x$platform_windows" = "xyes"; then
-  PLATFORM_WINDOWS_TRUE=
-  PLATFORM_WINDOWS_FALSE='#'
-else
-  PLATFORM_WINDOWS_TRUE='#'
-  PLATFORM_WINDOWS_FALSE=
-fi
-
- if test "x$platform_macos" = "xyes"; then
-  PLATFORM_MACOS_TRUE=
-  PLATFORM_MACOS_FALSE='#'
-else
-  PLATFORM_MACOS_TRUE='#'
-  PLATFORM_MACOS_FALSE=
-fi
-
- if test "x$platform_linux" = "xyes"; then
-  PLATFORM_LINUX_TRUE=
-  PLATFORM_LINUX_FALSE='#'
-else
-  PLATFORM_LINUX_TRUE='#'
-  PLATFORM_LINUX_FALSE=
-fi
-
+AM_CFLAGS="${AM_CFLAGS} -DWINVER=0x0A00 -D_WIN32_WINNT=0x0A00 -D_WIN32_IE=0x0A00"
+# "-Wl,--nxcompat" to enable DEP (Data Execution Prevention)
+# "-Wl,--dynamicbase" to enable ASLR (Address Space Layout Randomization)
+AM_LDFLAGS="${AM_LDFLAGS} -Wl,-no-undefined -Wl,--nxcompat -Wl,--no-insert-timestamp -Wl,--dynamicbase"
 
 # Debug symbols
 # Check whether --enable-debug was given.
@@ -4984,18 +4938,6 @@ else
   am__EXEEXT_FALSE=
 fi
 
-if test -z "${PLATFORM_WINDOWS_TRUE}" && test -z "${PLATFORM_WINDOWS_FALSE}"; then
-  as_fn_error $? "conditional \"PLATFORM_WINDOWS\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${PLATFORM_MACOS_TRUE}" && test -z "${PLATFORM_MACOS_FALSE}"; then
-  as_fn_error $? "conditional \"PLATFORM_MACOS\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${PLATFORM_LINUX_TRUE}" && test -z "${PLATFORM_LINUX_FALSE}"; then
-  as_fn_error $? "conditional \"PLATFORM_LINUX\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 
 : "${CONFIG_STATUS=./config.status}"
 ac_write_fail=0

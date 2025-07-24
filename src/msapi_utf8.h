@@ -22,7 +22,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#include <windows.h>
+#include "platform.h"
+#ifdef PLATFORM_WINDOWS
 #include <stdio.h>
 #include <shlobj.h>
 #include <ctype.h>
@@ -33,6 +34,7 @@
 #include <shlwapi.h>
 #include <setupapi.h>
 #include <direct.h>
+#endif
 #include <share.h>
 #include <errno.h>
 #include <fcntl.h>

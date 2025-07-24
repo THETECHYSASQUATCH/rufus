@@ -16,12 +16,12 @@
 #ifndef LIBBB_H
 #define LIBBB_H 1
 
-#ifndef _WIN32
-#error Only Windows platforms are supported
-#endif
+/* Include platform abstraction layer first */
+#include "../platform.h"
 
-#include "platform.h"
+#ifdef PLATFORM_WINDOWS
 #include "msapi_utf8.h"
+#endif
 
 #include <ctype.h>
 #include <errno.h>
@@ -34,10 +34,20 @@
 #include <stddef.h>
 #include <string.h>
 #include <time.h>
+#ifdef PLATFORM_WINDOWS
 #include <direct.h>
+#include <io.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <io.h>
+#ifdef PLATFORM_LINUX
+#include <unistd.h>
+#include <sys/mount.h>
+#endif
+#ifdef PLATFORM_MACOS  
+#include <unistd.h>
+#include <sys/mount.h>
+#endif
 
 #define ONE_TB                          1099511627776ULL
 
@@ -71,9 +81,75 @@
 #define IF_FEATURE_SEAMLESS_ZSTD(x)     x
 #endif
 
+#ifdef PLATFORM_WINDOWS
 #ifndef _MODE_T_
 #define _MODE_T_
 typedef unsigned short mode_t;
+#endif
+#else
+/* Non-Windows platforms have mode_t defined in sys/types.h */
+#endif
+
+/* Define smallint for all platforms - match bled/platform.h definition */
+#ifndef smallint
+#if defined(__386__) || defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64) || defined(__mips__) || defined(__cris__)
+typedef signed char smallint;
+#else
+typedef int smallint;
+#endif
+#endif
+
+/* Define FAST_FUNC for all platforms */
+#ifndef FAST_FUNC
+#define FAST_FUNC
+#endif
+
+/* Define busybox alignment and attribute macros */
+#ifndef ALIGN2  
+#define ALIGN2 __attribute__((aligned(2)))
+#endif
+
+#ifndef ALIGN1
+#define ALIGN1 __attribute__((aligned(1)))
+#endif
+
+#ifndef NORETURN
+#define NORETURN __attribute__((noreturn))
+#endif
+
+#ifndef NOINLINE
+#define NOINLINE __attribute__((noinline))
+#endif
+
+#ifndef ALWAYS_INLINE
+#define ALWAYS_INLINE __attribute__((always_inline)) inline
+#endif
+
+#ifndef PRAGMA_BEGIN_PACKED
+#define PRAGMA_BEGIN_PACKED _Pragma("pack(1)")
+#endif
+
+#ifndef PRAGMA_END_PACKED 
+#define PRAGMA_END_PACKED _Pragma("pack()")
+#endif
+
+#ifndef PACKED
+#define PACKED __attribute__((packed))
+#endif
+
+/* Byte swap functions */
+#ifndef SWAP_LE32
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define SWAP_LE16(val) (val)
+#define SWAP_LE32(val) (val)
+#define SWAP_LE64(val) (val)
+#define BB_BIG_ENDIAN 0
+#else
+#define SWAP_LE16(val) __builtin_bswap16(val)
+#define SWAP_LE32(val) __builtin_bswap32(val)  
+#define SWAP_LE64(val) __builtin_bswap64(val)
+#define BB_BIG_ENDIAN 1
+#endif
 #endif
 
 #ifndef _PID_T_
@@ -180,8 +256,13 @@ static inline void *xrealloc(void *ptr, size_t size) {
 
 #define bb_msg_read_error "read error"
 #define bb_msg_write_error "write error"
+#ifdef PLATFORM_WINDOWS
 #define bb_make_directory(path, mode, flags) SHCreateDirectoryExU(NULL, path, NULL)
+#else
+#define bb_make_directory(path, mode, flags) mkdir(path, 0755)
+#endif
 
+#ifdef PLATFORM_WINDOWS
 static inline int link(const char *oldpath, const char *newpath) { errno = ENOSYS; return -1; }
 static inline int symlink(const char *oldpath, const char *newpath) { errno = ENOSYS; return -1; }
 static inline int chown(const char *path, uid_t owner, gid_t group) { errno = ENOSYS; return -1; }
@@ -190,6 +271,7 @@ static inline int utimes64(const char* filename, const struct timeval64 times64[
 static inline int fnmatch(const char *pattern, const char *string, int flags) { return PathMatchSpecA(string, pattern) ? 0 : 1; }
 static inline pid_t wait(int* status) { *status = 4; return -1; }
 #define wait_any_nohang wait
+#endif
 
 /* This enables the display of a progress based on the number of bytes read */
 extern uint64_t bb_total_rb;
@@ -221,7 +303,12 @@ static inline int full_read(int fd, void *buf, unsigned int count) {
 		bb_virtual_pos += count;
 		rb = (int)count;
 	} else {
-		rb = (bled_read != NULL) ? bled_read(fd, buf, count) : _read(fd, buf, count);
+		rb = (bled_read != NULL) ? bled_read(fd, buf, count) : 
+#ifdef PLATFORM_WINDOWS
+			_read(fd, buf, count);
+#else
+			read(fd, buf, count);
+#endif
 	}
 	if (rb > 0) {
 		bb_total_rb += rb;
@@ -239,7 +326,12 @@ static inline int full_write(int fd, const void* buffer, unsigned int count)
 		return -1;
 	}
 
-	return (bled_write != NULL) ? bled_write(fd, buffer, count) : _write(fd, buffer, count);
+	return (bled_write != NULL) ? bled_write(fd, buffer, count) :
+#ifdef PLATFORM_WINDOWS
+		_write(fd, buffer, count);
+#else
+		write(fd, buffer, count);
+#endif
 }
 
 static inline void bb_copyfd_exact_size(int fd1, int fd2, off_t size)
@@ -283,13 +375,17 @@ static inline void bb_copyfd_exact_size(int fd1, int fd2, off_t size)
 	free(buf);
 }
 
+#ifdef PLATFORM_WINDOWS
 static inline struct tm *localtime_r(const time_t *timep, struct tm *result) {
 	if (localtime_s(result, timep) != 0)
 		result = NULL;
 	return result;
 }
+#endif
+/* On Linux/Unix, localtime_r is already available */
 
 #define safe_read full_read
+#ifdef PLATFORM_WINDOWS
 #define lstat stat
 #define xmalloc malloc
 #define xzalloc(x) calloc(x, 1)
@@ -308,6 +404,24 @@ static inline void xmove_fd(int from, int to)
 		_close(from);
 	}
 }
+#else
+/* Non-Windows platform equivalents */
+#define xmalloc malloc
+#define xzalloc(x) calloc(x, 1)
+#define malloc_or_warn malloc
+struct fd_pair { int rd; int wr; };
+static inline void xpipe(int filedes[2]) { pipe(filedes); }
+#define xpiped_pair(pair) xpipe(&((pair).rd))
+#define xlseek lseek
+#define xread safe_read
+static inline void xmove_fd(int from, int to)
+{
+	if (from != to) {
+		(void)dup2(from, to);
+		close(from);
+	}
+}
+#endif
 
 #if defined(_MSC_VER)
 #define _S_IFBLK 0x3000
@@ -339,11 +453,14 @@ static inline void xmove_fd(int from, int to)
 #endif
 
 /* MinGW doesn't know these */
+#ifdef PLATFORM_WINDOWS
 #define _S_IFLNK    0xA000
 #define _S_IFSOCK   0xC000
 #define S_IFLNK     _S_IFLNK
 #define S_IFSOCK    _S_IFSOCK
 #define S_ISLNK(m)  (((m) & _S_IFMT) == _S_IFLNK)
 #define S_ISSOCK(m) (((m) & _S_IFMT) == _S_IFSOCK)
+#endif
+/* On Linux/Unix, these constants are already defined in sys/stat.h */
 
 #endif

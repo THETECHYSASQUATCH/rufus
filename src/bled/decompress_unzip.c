@@ -10,6 +10,7 @@
 
 #include "libbb.h"
 #include "bb_archive.h"
+#include <stdbool.h>
 
 #if 0
 # define dbg(...) bb_printf(__VA_ARGS__)
@@ -344,7 +345,11 @@ static uint64_t read_next_cdf(int fd, uint64_t cdf_offset, cdf_header_t *cdf)
 
 	dbg("Reading CDF at 0x%"OFF_FMT"x", cdf_offset);
 	lseek(fd, cdf_offset, SEEK_SET);
+#ifdef PLATFORM_WINDOWS
 	(void)_read(fd, &magic, 4);
+#else
+	(void)read(fd, &magic, 4);
+#endif
 	/* Central Directory End? Assume CDF has ended.
 	 * (more correct method is to use cde.cdf_entries_total counter)
 	 */
@@ -356,7 +361,11 @@ static uint64_t read_next_cdf(int fd, uint64_t cdf_offset, cdf_header_t *cdf)
 		dbg("got ZIP64_CDE_MAGIC");
 		return 0; /* EOF */
 	}
+#ifdef PLATFORM_WINDOWS
 	(void)_read(fd, cdf->raw, CDF_HEADER_LEN);
+#else
+	(void)read(fd, cdf->raw, CDF_HEADER_LEN);
+#endif
 
 	FIX_ENDIANNESS_CDF(*cdf);
 	dbg("  magic:%08x filename_len:%u extra_len:%u file_comment_length:%u",
